@@ -43,11 +43,11 @@ constexpr T lerp(T a, T b, T t) {
 void drawFractal(SDL_Renderer* renderer)
 {
     SDL_RenderClear(renderer);
-    size_t mem_size = WIDTH * HEIGHT * sizeof(int);
-    int* h_screen;
+    size_t mem_size = WIDTH * HEIGHT * sizeof(DataType);
+    DataType* h_screen;
     cudaError(cudaMallocHost(&h_screen, mem_size));
 
-    int* d_screen;
+    DataType* d_screen;
     cudaError(cudaMalloc(reinterpret_cast<void**>(&d_screen), mem_size));
     launch_calculateScreen(d_screen, zoom, offsetX, offsetY, max_iterations);
     cudaMemcpy(h_screen, d_screen, mem_size, cudaMemcpyDeviceToHost);
@@ -57,17 +57,17 @@ void drawFractal(SDL_Renderer* renderer)
         for (int x = 0; x < WIDTH; x++)
         {
             /*
-            DataType point_x = lerp(-2.0f / zoom + offsetX, 2.0f / zoom + offsetX, static_cast<DataType>(x)/HEIGHT);
-            DataType point_y = lerp(-2.0f / zoom + offsetY, 2.0f / zoom + offsetY, static_cast<DataType>(y)/WIDTH);
+            DataType point_x = lerp(-2.0f / zoom + offsetX, 2.0f / zoom + offsetX, static_cast<DataType>(x)/WIDTH);
+            DataType point_y = lerp(-2.0f / zoom + offsetY, 2.0f / zoom + offsetY, static_cast<DataType>(y)/HEIGHT);
             */
             SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
             //int iters = isInSet(std::complex<DataType>(point_x, point_y), max_iterations);
             if (h_screen[y * WIDTH + x] < max_iterations)
             {
                 SDL_SetRenderDrawColor(renderer, 
-                20 * h_screen[y * WIDTH + x] % 255,
-                3 * h_screen[y * WIDTH + x] % 255, 
-                10 * h_screen[y * WIDTH + x] % 255, 
+                20 * h_screen[y * WIDTH + x] ,
+                3 * h_screen[y * WIDTH + x] , 
+                10 * h_screen[y * WIDTH + x], 
                 255);
             }
             SDL_RenderPoint(renderer, x, y);
