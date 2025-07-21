@@ -1,24 +1,25 @@
+#include "mandelbrot_kernel.cuh"
 #include <SDL3/SDL.h>
-
+#include <cuda_runtime.h>
 #include <numeric>
 #include <complex>
 #include <cmath>
 #include <limits>
 
-
+using DataType = double;
 
 static int max_iterations = 5;
-static double zoom = 1.0;
-static double offsetX = 0.0;
-static double offsetY = 0.0;
+static DataType zoom = 1.0;
+static DataType offsetX = 0.0;
+static DataType offsetY = 0.0;
 
 const int normal = 1;
 const int WIDTH = 800;
 const int HEIGHT = 600;
 
-int isInSet(std::complex<double> c, int max_iterations)
+int isInSet(std::complex<DataType> c, int max_iterations)
 {
-    std::complex<double> z(0, 0);
+    std::complex<DataType> z(0, 0);
     int i;
     for (int i = 0; i < max_iterations; i++)
     {
@@ -41,29 +42,37 @@ constexpr T lerp(T a, T b, T t) {
 
 void drawFractal(SDL_Renderer* renderer)
 {
-    //SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_RenderClear(renderer);
-    //int max_iterations = static_cast<int>(10 * zoom);
+    size_t mem_size = WIDTH * HEIGHT * sizeof(int);
+    int* h_screen;
+    cudaError(cudaMallocHost(&h_screen, mem_size));
+
+    int* d_screen;
+    cudaError(cudaMalloc(reinterpret_cast<void**>(&d_screen), mem_size));
+    launch_calculateScreen(d_screen, zoom, offsetX, offsetY, max_iterations);
+    cudaMemcpy(h_screen, d_screen, mem_size, cudaMemcpyDeviceToHost);
+
     for (int y = 0; y < HEIGHT; y++)
     {
         for (int x = 0; x < WIDTH; x++)
         {
-            double point_x = lerp(-2.0 / zoom + offsetX, 2.0 / zoom + offsetX, static_cast<double>(x)/HEIGHT);
-            double point_y = lerp(-2.0 / zoom + offsetY, 2.0 / zoom + offsetY, static_cast<double>(y)/WIDTH);
+            /*
+            DataType point_x = lerp(-2.0f / zoom + offsetX, 2.0f / zoom + offsetX, static_cast<DataType>(x)/HEIGHT);
+            DataType point_y = lerp(-2.0f / zoom + offsetY, 2.0f / zoom + offsetY, static_cast<DataType>(y)/WIDTH);
+            */
             SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-            int iters = isInSet(std::complex<double>(point_x, point_y), max_iterations);
-            if (iters < max_iterations)
+            //int iters = isInSet(std::complex<DataType>(point_x, point_y), max_iterations);
+            if (h_screen[y * WIDTH + x] < max_iterations)
             {
                 SDL_SetRenderDrawColor(renderer, 
-                20 * iters % 255,
-                3 * iters % 255, 
-                10 * iters % 255, 
+                20 * h_screen[y * WIDTH + x] % 255,
+                3 * h_screen[y * WIDTH + x] % 255, 
+                10 * h_screen[y * WIDTH + x] % 255, 
                 255);
             }
             SDL_RenderPoint(renderer, x, y);
         }
     }
-
     SDL_RenderPresent(renderer);
 }
 
