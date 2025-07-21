@@ -1,5 +1,5 @@
 ![Alt text](./mandelbrot.gif)
-# MADENLBROT_SET)))))))))))))))))))))))))))))))))))))))))))))))))))))
+# MANDELBROT_SET))))))))))
 
 require sdl3 and cuda
 
@@ -9,4 +9,6 @@ rt for number or iterations
 
 # TODO
 
-- multithreading
+- ~~multithreading~~
+- animation
+- fix movement
